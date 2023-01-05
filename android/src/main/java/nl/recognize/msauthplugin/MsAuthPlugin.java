@@ -53,6 +53,9 @@ public class MsAuthPlugin extends Plugin {
                 return;
             }
 
+            String authorityUrl = call.getString("authorityUrl") != null ?
+                    call.getString("authorityUrl") :
+                    "https://login.microsoftonline.com/" + call.getString("tenant");
             this.acquireToken(
                     context,
                     call.getArray("scopes").toList(),
@@ -69,6 +72,7 @@ public class MsAuthPlugin extends Plugin {
                             call.reject("Unable to obtain access token");
                         }
                     }
+                    , authorityUrl
                 );
         } catch (Exception ex) {
             Logger.error("Unable to login", ex);
@@ -108,10 +112,6 @@ public class MsAuthPlugin extends Plugin {
             Logger.error("Exception occurred during logout", ex);
             call.reject("Unable to fetch context.");
         }
-    }
-
-    protected String getAuthorityUrl(ISingleAccountPublicClientApplication context) {
-        return context.getConfiguration().getDefaultAuthority().getAuthorityURL().toString();
     }
 
     private void acquireTokenInteractively(
@@ -154,9 +154,9 @@ public class MsAuthPlugin extends Plugin {
         context.acquireToken(params.build());
     }
 
-    private void acquireToken(ISingleAccountPublicClientApplication context, List<String> scopes, final TokenResultCallback callback)
+    private void acquireToken(ISingleAccountPublicClientApplication context, List<String> scopes, final TokenResultCallback callback, String authorityUrl)
         throws MsalException, InterruptedException {
-        String authority = getAuthorityUrl(context);
+        String authority = authorityUrl;
 
         final ICurrentAccountResult ca;
         if ((ca = context.getCurrentAccount()) != null && ca.getCurrentAccount() == null) {
